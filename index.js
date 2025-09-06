@@ -6,8 +6,18 @@ const qrcode = require('qrcode-terminal');
 // Initialize Firebase Admin SDK
 let db;
 try {
-    // Try to load service account key
-    const serviceAccount = require('./firebase-service-account.json');
+    let serviceAccount;
+    
+    // Check if we have the service account as an environment variable (for cloud deployment)
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+        serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        console.log('✅ Using Firebase service account from environment variable');
+    } else {
+        // Fallback to file (for local development)
+        serviceAccount = require('./firebase-service-account.json');
+        console.log('✅ Using Firebase service account from file');
+    }
+    
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
         projectId: process.env.FIREBASE_PROJECT_ID || serviceAccount.project_id
@@ -17,9 +27,9 @@ try {
 } catch (error) {
     console.error('❌ Error initializing Firebase Admin SDK:', error.message);
     console.log('Please make sure you have:');
-    console.log('1. Downloaded your Firebase service account key');
-    console.log('2. Renamed it to "firebase-service-account.json"');
-    console.log('3. Placed it in the project root directory');
+    console.log('1. Set FIREBASE_SERVICE_ACCOUNT environment variable (for cloud deployment)');
+    console.log('2. OR downloaded your Firebase service account key file');
+    console.log('3. Set FIREBASE_PROJECT_ID environment variable');
     process.exit(1);
 }
 
