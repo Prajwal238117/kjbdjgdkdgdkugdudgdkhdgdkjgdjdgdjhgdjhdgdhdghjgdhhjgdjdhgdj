@@ -47,6 +47,10 @@ const client = new Client({
             '--no-zygote',
             '--disable-gpu'
         ]
+    },
+    webVersionCache: {
+        type: 'remote',
+        remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
     }
 });
 
@@ -54,71 +58,64 @@ const client = new Client({
 let isWhatsAppReady = false;
 let isServerRunning = true;
 let reconnectAttempts = 0;
-const maxReconnectAttempts = 5;
+const maxReconnectAttempts = 10;
 let messageQueue = []; // Queue for messages when WhatsApp is not ready
 
-// WhatsApp event handlers
+// WhatsApp event handlers - minimal output
 client.on('qr', (qr) => {
-    console.log('📱 WhatsApp QR Code generated. Scan with your phone:');
-    qrcode.generate(qr, { small: true });
-    console.log('\n💡 Scan the QR code above with your WhatsApp mobile app');
+    console.log('QR Code generated - scan with WhatsApp');
+});
+
+client.on('change_state', (state) => {
+    if (state === 'CONFLICT' || state === 'UNPAIRED') {
+        console.log('WhatsApp needs authentication');
+    }
+});
+
+client.on('disconnected', (reason) => {
+    console.log('⚠️ WhatsApp client disconnected:', reason);
+    isWhatsAppReady = false;
+    
+    if (reconnectAttempts < maxReconnectAttempts) {
+        reconnectAttempts++;
+        console.log(`🔄 Attempting to reconnect... (${reconnectAttempts}/${maxReconnectAttempts})`);
+        setTimeout(() => {
+            client.initialize();
+        }, 5000);
+    } else {
+        console.error('❌ Max reconnection attempts reached. Please restart the application.');
+    }
 });
 
 client.on('ready', async () => {
-    console.log('✅ WhatsApp client is ready!');
+    console.log('WhatsApp ready');
     isWhatsAppReady = true;
     reconnectAttempts = 0;
     
-    // Process any queued messages
+    // Process queued messages
     if (messageQueue.length > 0) {
-        console.log(`📤 Processing ${messageQueue.length} queued messages...`);
+        console.log(`Processing ${messageQueue.length} queued messages`);
         for (const queuedMessage of messageQueue) {
             await sendWhatsAppMessage(queuedMessage);
-            await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay between messages
+            await new Promise(resolve => setTimeout(resolve, 500));
         }
-        messageQueue = []; // Clear the queue
-        console.log('✅ All queued messages processed');
-    }
-    
-    // Show available chats for group ID reference
-    console.log('💡 To send to a WhatsApp group:');
-    console.log('   1. Add this bot to your group');
-    console.log('   2. Send any message in the group');
-    console.log('   3. Check the console for the group ID');
-    console.log('   4. Update WHATSAPP_PHONE_NUMBER in .env with the group ID');
-    
-    // List available chats to help find groups
-    try {
-        const chats = await client.getChats();
-        console.log('\n📱 Available chats:');
-        chats.forEach(chat => {
-            if (chat.isGroup) {
-                console.log(`   Group: ${chat.name} - ID: ${chat.id._serialized}`);
-            }
-        });
-    } catch (error) {
-        console.log('⚠️ Could not fetch chats:', error.message);
+        messageQueue = [];
     }
 });
 
 client.on('authenticated', () => {
-    console.log('🔐 WhatsApp authentication successful');
+    console.log('WhatsApp authenticated');
 });
 
 client.on('auth_failure', (msg) => {
-    console.error('❌ WhatsApp authentication failed:', msg);
+    console.log('Auth failed:', msg);
 });
 
-// Listen for messages to help find group IDs and handle commands
+// Listen for messages and handle commands
 client.on('message', (message) => {
     if (message.from.includes('@g.us')) {
-        console.log(`📱 Group message detected! Group ID: ${message.from}`);
-        console.log(`   Group Name: ${message.fromMe ? 'You' : 'Other'}`);
-        console.log(`💡 Copy this Group ID and update your .env file:`);
-        console.log(`   WHATSAPP_PHONE_NUMBER=${message.from}`);
+        console.log(`Group ID: ${message.from}`);
     }
-    
-    // Handle commands
     handleCommand(message);
 });
 
