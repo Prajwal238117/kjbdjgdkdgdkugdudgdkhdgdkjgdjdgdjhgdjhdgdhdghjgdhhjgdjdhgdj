@@ -471,23 +471,18 @@ function formatPaymentMessage(paymentData) {
     }
     
     // Create message with all requested details
-    const message = `New Payment Alert! 💰
+    const message = `
+    New Order Alert! 💰
 
-Payment ID: ${paymentId}
 Customer Name: ${fullName}
 Phone: ${phone}
 Email: ${email}
 Product Name: ${productName}
 Price: Rs ${productPrice}
-Variant: ${variantLabel} (Rs ${variantPrice})
+Variant: ${variantLabel} 
 Extra Fields: ${extraFieldsText}
 Payment Method: ${paymentMethod}
 Time: ${timestamp}
-
-💡 Quick Actions:
-• Check status: "status ${paymentId}"
-• Approve: "${paymentId} + approved"
-• Reject: "${paymentId} + rejected"
 
 Check Screenshot at: https://cgaph.com/admin.html`;
     
