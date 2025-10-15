@@ -51,7 +51,9 @@ const client = new Client({
     webVersionCache: {
         type: 'remote',
         remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
-    }
+    },
+    authTimeoutMs: 60000,
+    restartOnAuthFail: true
 });
 
 // WhatsApp connection status
@@ -63,7 +65,10 @@ let messageQueue = []; // Queue for messages when WhatsApp is not ready
 
 // WhatsApp event handlers - minimal output
 client.on('qr', (qr) => {
-    console.log('QR Code generated - scan with WhatsApp');
+    console.log('=== WHATSAPP QR CODE ===');
+    qrcode.generate(qr, { small: true });
+    console.log('Scan this QR code with WhatsApp mobile app');
+    console.log('========================');
 });
 
 client.on('change_state', (state) => {
