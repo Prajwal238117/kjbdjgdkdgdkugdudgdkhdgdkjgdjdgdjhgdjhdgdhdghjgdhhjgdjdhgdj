@@ -66,7 +66,7 @@ let messageQueue = []; // Queue for messages when WhatsApp is not ready
 // WhatsApp event handlers - minimal output
 client.on('qr', (qr) => {
     console.log('=== WHATSAPP QR CODE ===');
-    qrcode.generate(qr, { small: true });
+    qrcode.generate(qr);
     console.log('Scan this QR code with WhatsApp mobile app');
     console.log('========================');
 });
